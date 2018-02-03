@@ -46,7 +46,7 @@ type PasteSuccess struct {
 func main() {
 	app := cli.NewApp()
 	app.Name = "PasteDB"
-	app.Version = "0.0.1"
+	app.Version = "v0.0.1"
 	app.Usage = "Share your pastes securely"
 
 	app.Flags = []cli.Flag{
