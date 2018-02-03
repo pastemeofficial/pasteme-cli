@@ -18,25 +18,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-//func TestWhatever(t *testing.T) {
-//	var err error
-//	a := assert.New(t)
-//
-//	cmd := exec.Command("./pastedb-cli")
-//	stdout, err := cmd.Output()
-//	stdout = []byte(strings.Trim(string(stdout), "\n"))
-//	result := string(stdout)
-//
-//	if err != nil {
-//		//println(err.Error())
-//		return
-//	}
-//
-//	if !a.Equal("Please provide a name for your paste. Use the --help if in doubt.", result) {
-//		t.Fatalf("The strings did not match")
-//	}
-//}
-
 func TestGenerateRandomBytes(t *testing.T) {
 	a := assert.New(t)
 	rb, err := GenerateRandomBytes(24)
@@ -59,7 +40,6 @@ func TestDeriveKey(t *testing.T) {
 	mockSalt := []byte("randomSalt")
 	mockPbkdf2 := pbkdf2.Key([]byte(mockPassphrase), mockSalt, 1000, 32, sha256.New)
 	pbkdf2result, saltResult := deriveKey(mockPassphrase, mockSalt)
-	//fmt.Println(string(passphrase), string(salt))
 
 	if !a.Equal(mockPbkdf2, pbkdf2result) {
 		t.Fatalf("The derived keys do not match!")
@@ -85,6 +65,7 @@ func TestDeriveKey(t *testing.T) {
 
 func TestEncrypt(t *testing.T) {
 	a := assert.New(t)
+
 	//test with predefined passphrase and salt
 	mockPassphrase := "passphrase"
 	plainText := "Some random text to encrypt"
@@ -117,9 +98,7 @@ func TestAction(t *testing.T) {
 	//var result string
 	a := assert.New(t)
 
-	err = SetupApp([]string{"run", ""})
-	//fmt.Println("err", err.Error())
-	//fmt.Println("res:", err.Error())
+	err = SetupApp([]string{"cmd", ""})
 
 	if !a.Equal("paste_name_error", err.Error()) {
 		t.Fatalf("The expected result did not match the required result. (%s, %s)", err, "paste_name_error")
@@ -198,15 +177,13 @@ func SetupApp(args []string) error {
 	app.Action = Action
 
 	err = app.Run(args)
+
 	return err
 }
 
-//
 func TestBase(t *testing.T) {
 	os.Args = []string{"cmd", "--name", "Asddd", "--body", "This is a random paste body", "--source", "--destroy"}
 	main()
-	//var writers io.Writer
-	//in := io.Writer(writers)
 
 	os.Args = []string{"cmd", "--name", "Asddd", "--source", "--destroy"}
 	main()

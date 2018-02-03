@@ -88,7 +88,6 @@ func Action(c *cli.Context) error {
 
 	if len(name) == 0 {
 		fmt.Println("Please provide a name for your paste. Use the --help if in doubt.")
-		//return cli.NewExitError("Please provide a name for your paste. Use the --help if in doubt.", 11)
 		return errors.New("paste_name_error")
 	}
 
@@ -102,19 +101,13 @@ func Action(c *cli.Context) error {
 			return err
 		}
 	} else {
-		//terminalText = body
 		if len(body) > 0 {
 			terminalText, err = ReadDataFromTerminal(strings.NewReader(body))
 		} else {
 			terminalText = ""
 		}
-
-		if err != nil {
-			return err
-		}
 	}
 
-	//terminalText, err := ReadDataFromTerminal(r)
 
 	if len(terminalText) > 0 {
 		pasteText = terminalText
@@ -124,23 +117,15 @@ func Action(c *cli.Context) error {
 
 	if err != nil || len(pasteText) == 0 {
 		fmt.Println("Your paste has a length of 0. Try again, but this time try to put some content.")
-		//return cli.NewExitError("Your paste has a length of 0. Try again, but this time try to put some content.", 12)
 		return errors.New("paste_length_error")
 	}
 
 	if !destroy && !IsValidMinutes(minutes) {
 		fmt.Println("You did not provide a valid minutes flag. See --help for more insight on this one.")
-		//return cli.NewExitError("You did not provide a valid minutes flag. See --help for more insight on this one.", 13)
 		return errors.New("expire_not_found")
 	}
 
 	rb, _ := GenerateRandomBytes(28)
-
-	//if err != nil {
-	//	fmt.Println("We could not get enough random bytes for this to work.")
-	//	//return cli.NewExitError("We could not get enough random bytes for this to work.", 14)
-	//	return errors.New("random_bytes_error")
-	//}
 
 	//rand.Read(rb)
 	h := sha256.New()
@@ -172,9 +157,7 @@ func Action(c *cli.Context) error {
 	bodyString := string(bodyBytes)
 
 	if err != nil {
-		//fmt.Println("There was some problem while sending the paste data. Please try again later or contact the site administrator.")
 		return cli.NewExitError("There was some problem while sending the paste data. Please try again later or contact the site administrator.", 15)
-		//return nil
 	}
 
 	if resp.StatusCode == 200 {
@@ -182,9 +165,7 @@ func Action(c *cli.Context) error {
 		err = json.Unmarshal([]byte(bodyString), &res)
 
 		if err != nil {
-			//fmt.Println("We received an invalid response from the server. Please contact the site administrator.")
 			return cli.NewExitError("We received an invalid response from the server. Please contact the site administrator.", 16)
-			//return nil
 		}
 
 		msg := `Paste added successfully!
@@ -193,7 +174,6 @@ Share this url to your friends: https://pastedb.io/paste/` + res.Uuid + `#` + pa
 		return nil
 	} else {
 		return cli.NewExitError("There was some error while pasting your data. Please try again later or contact the PasteDB admin!", 17)
-		//fmt.Println("There was some error while pasting your data. Please try again later or contact the Pastedb admin!")
 	}
 
 	return nil
@@ -215,12 +195,6 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-//
-//func SendRequest(pasteBodyData string, pasteBodyIv string, pasteNameData string, pasteNameIv string) error {
-//
-//	return nil
-//}
-
 func ReadDataFromTerminal(r io.Reader) (string, error) {
 	var result string
 	rBytes, err := ioutil.ReadAll(r)
@@ -231,6 +205,7 @@ func ReadDataFromTerminal(r io.Reader) (string, error) {
 	return result, nil
 }
 
+// @SRC: https://gist.github.com/tscholl2/dc7dc15dc132ea70a98e8542fefffa28
 func deriveKey(passphrase string, salt []byte) ([]byte, []byte) {
 	if salt == nil {
 		salt = make([]byte, 8)
@@ -241,6 +216,7 @@ func deriveKey(passphrase string, salt []byte) ([]byte, []byte) {
 	return pbkdf2.Key([]byte(passphrase), salt, 1000, 32, sha256.New), salt
 }
 
+// @SRC: https://gist.github.com/tscholl2/dc7dc15dc132ea70a98e8542fefffa28
 func encrypt(passphrase, plaintext string) string {
 	key, salt := deriveKey(passphrase, nil)
 	iv := make([]byte, 12)
@@ -261,15 +237,3 @@ func IsValidMinutes(minutes int64) bool {
 	}
 	return false
 }
-
-//func decrypt(passphrase, ciphertext string) string {
-//	arr := strings.Split(ciphertext, "-")
-//	salt, _ := hex.DecodeString(arr[0])
-//	iv, _ := hex.DecodeString(arr[1])
-//	data, _ := hex.DecodeString(arr[2])
-//	key, _ := deriveKey(passphrase, salt)
-//	b, _ := aes.NewCipher(key)
-//	aesgcm, _ := cipher.NewGCM(b)
-//	data, _ = aesgcm.Open(nil, iv, data, nil)
-//	return string(data)
-//}
