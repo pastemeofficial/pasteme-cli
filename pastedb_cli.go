@@ -8,13 +8,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/urfave/cli"
-	"golang.org/x/crypto/pbkdf2"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 type Paste struct {
@@ -69,98 +72,131 @@ func main() {
 		},
 	}
 
-	app.Action = func(c *cli.Context) error {
-		name := c.String("name")
-		sourceCode := c.Bool("source")
-		destroy := c.Bool("destroy")
-		body := c.String("body")
-		minutes := c.Int64("expire")
-		pasteText := ""
-
-		if len(name) == 0 {
-			fmt.Println("Please provide a name for your paste. Use the --help if in doubt.")
-			os.Exit(1)
-		}
-
-		terminalText, err := ReadDataFromTerminal()
-
-		if len(terminalText) > 0 {
-			pasteText = terminalText
-		} else {
-			//if len(body) > 0 {
-			pasteText = body
-		}
-
-		if err != nil || len(pasteText) == 0 {
-			fmt.Println("Your paste has a length of 0. Try again, but this time try to put some content.")
-			os.Exit(1)
-		}
-
-		if !destroy && !IsValidMinutes(minutes) {
-			fmt.Println("You did not provide a valid minutes flag. See --help for more insight on this one.")
-			os.Exit(1)
-		}
-
-		rb, err := GenerateRandomBytes(28)
-
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		rand.Read(rb)
-		h := sha256.New()
-		h.Write(rb)
-		passPhrase := hex.EncodeToString(h.Sum(nil))
-		encryptName := encrypt(passPhrase, name)
-		encryptData := encrypt(passPhrase, pasteText)
-		splittedEncryptName := strings.Split(encryptName, "-")
-		splittedEncryptData := strings.Split(encryptData, "-")
-		//split encrypt result
-		paste := &Paste{}
-		paste.Paste.Name.Data = splittedEncryptName[2]
-		paste.Paste.Name.Iv = splittedEncryptName[1]
-		paste.Paste.Name.Salt = splittedEncryptName[0]
-		paste.Paste.Body.Data = splittedEncryptData[2]
-		paste.Paste.Body.Iv = splittedEncryptData[1]
-		paste.Paste.Body.Salt = splittedEncryptData[0]
-		paste.SourceCode = sourceCode
-		paste.SelfDestruct = destroy
-		if !destroy {
-			paste.ExpiresMinutes = minutes
-		}
-
-		jsonValue, _ := json.Marshal(paste)
-		//fmt.Println(string(jsonValue))
-		resp, err := http.Post("https://api.pastedb.io/api/paste/new", "application/json", bytes.NewBuffer(jsonValue))
-		//resp.Body.Read(res)
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		bodyString := string(bodyBytes)
-
-		if err != nil {
-			fmt.Println("There was some problem while sending the paste data. Please try again later or contact the site administrator.")
-			os.Exit(1)
-		}
-
-		if resp.StatusCode == 200 {
-			res := PasteSuccess{}
-			err = json.Unmarshal([]byte(bodyString), &res)
-
-			if err != nil {
-				fmt.Println("We received an invalid response from the server. Please contact the site administrator.")
-				os.Exit(1)
-			}
-
-			fmt.Println("Paste added successfully")
-			fmt.Println("Share this url to your friends: https://pastedb.io/paste/" + res.Uuid + "#" + passPhrase)
-		} else {
-			fmt.Println("There was some error while pasting your data. Please try again later or contact the Pastedb admin!")
-		}
-
-		return nil
-	}
+	app.Action = Action
 
 	app.Run(os.Args)
+}
+
+func Action(c *cli.Context) error {
+	var err error
+	name := c.String("name")
+	sourceCode := c.Bool("source")
+	destroy := c.Bool("destroy")
+	body := c.String("body")
+	minutes := c.Int64("expire")
+	pasteText := ""
+
+	if len(name) == 0 {
+		fmt.Println("Please provide a name for your paste. Use the --help if in doubt.")
+		//return cli.NewExitError("Please provide a name for your paste. Use the --help if in doubt.", 11)
+		return errors.New("paste_name_error")
+	}
+
+	//var r io.Reader
+	var terminalText string
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		//r = strings.NewReader(string(os.Stdin))
+		terminalText, err = ReadDataFromTerminal(os.Stdin)
+		if err != nil {
+			return err
+		}
+	} else {
+		//terminalText = body
+		if len(body) > 0 {
+			terminalText, err = ReadDataFromTerminal(strings.NewReader(body))
+		} else {
+			terminalText = ""
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	//terminalText, err := ReadDataFromTerminal(r)
+
+	if len(terminalText) > 0 {
+		pasteText = terminalText
+	} else {
+		pasteText = body
+	}
+
+	if err != nil || len(pasteText) == 0 {
+		fmt.Println("Your paste has a length of 0. Try again, but this time try to put some content.")
+		//return cli.NewExitError("Your paste has a length of 0. Try again, but this time try to put some content.", 12)
+		return errors.New("paste_length_error")
+	}
+
+	if !destroy && !IsValidMinutes(minutes) {
+		fmt.Println("You did not provide a valid minutes flag. See --help for more insight on this one.")
+		//return cli.NewExitError("You did not provide a valid minutes flag. See --help for more insight on this one.", 13)
+		return errors.New("expire_not_found")
+	}
+
+	rb, _ := GenerateRandomBytes(28)
+
+	//if err != nil {
+	//	fmt.Println("We could not get enough random bytes for this to work.")
+	//	//return cli.NewExitError("We could not get enough random bytes for this to work.", 14)
+	//	return errors.New("random_bytes_error")
+	//}
+
+	//rand.Read(rb)
+	h := sha256.New()
+	h.Write(rb)
+	passPhrase := hex.EncodeToString(h.Sum(nil))
+	encryptName := encrypt(passPhrase, name)
+	encryptData := encrypt(passPhrase, pasteText)
+	splittedEncryptName := strings.Split(encryptName, "-")
+	splittedEncryptData := strings.Split(encryptData, "-")
+	//split encrypt result
+	paste := &Paste{}
+	paste.Paste.Name.Data = splittedEncryptName[2]
+	paste.Paste.Name.Iv = splittedEncryptName[1]
+	paste.Paste.Name.Salt = splittedEncryptName[0]
+	paste.Paste.Body.Data = splittedEncryptData[2]
+	paste.Paste.Body.Iv = splittedEncryptData[1]
+	paste.Paste.Body.Salt = splittedEncryptData[0]
+	paste.SourceCode = sourceCode
+	paste.SelfDestruct = destroy
+	if !destroy {
+		paste.ExpiresMinutes = minutes
+	}
+
+	jsonValue, _ := json.Marshal(paste)
+	//fmt.Println(string(jsonValue))
+	resp, err := http.Post("https://api.pastedb.io/api/paste/new", "application/json", bytes.NewBuffer(jsonValue))
+	//resp.Body.Read(res)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyString := string(bodyBytes)
+
+	if err != nil {
+		//fmt.Println("There was some problem while sending the paste data. Please try again later or contact the site administrator.")
+		return cli.NewExitError("There was some problem while sending the paste data. Please try again later or contact the site administrator.", 15)
+		//return nil
+	}
+
+	if resp.StatusCode == 200 {
+		res := PasteSuccess{}
+		err = json.Unmarshal([]byte(bodyString), &res)
+
+		if err != nil {
+			//fmt.Println("We received an invalid response from the server. Please contact the site administrator.")
+			return cli.NewExitError("We received an invalid response from the server. Please contact the site administrator.", 16)
+			//return nil
+		}
+
+		msg := `Paste added successfully!
+Share this url to your friends: https://pastedb.io/paste/` + res.Uuid + `#` + passPhrase
+		fmt.Println(msg)
+		return nil
+	} else {
+		return cli.NewExitError("There was some error while pasting your data. Please try again later or contact the PasteDB admin!", 17)
+		//fmt.Println("There was some error while pasting your data. Please try again later or contact the Pastedb admin!")
+	}
+
+	return nil
 }
 
 // @SRC: https://gist.github.com/dopey/c69559607800d2f2f90b1b1ed4e550fb
@@ -179,21 +215,19 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-func SendRequest(pasteBodyData string, pasteBodyIv string, pasteNameData string, pasteNameIv string) error {
+//
+//func SendRequest(pasteBodyData string, pasteBodyIv string, pasteNameData string, pasteNameIv string) error {
+//
+//	return nil
+//}
 
-	return nil
-}
-
-func ReadDataFromTerminal() (string, error) {
+func ReadDataFromTerminal(r io.Reader) (string, error) {
 	var result string
-	stat, _ := os.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		bytes, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			panic(err)
-		}
-		result = string(bytes)
+	rBytes, err := ioutil.ReadAll(r)
+	if err != nil {
+		return "", err
 	}
+	result = string(rBytes)
 	return result, nil
 }
 
