@@ -45,7 +45,7 @@ type PasteSuccess struct {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "PasteDB"
+	app.Name = "Paste.me"
 	app.Version = "v0.0.1"
 	app.Usage = "Share your pastes securely"
 
@@ -151,7 +151,7 @@ func Action(c *cli.Context) error {
 
 	jsonValue, _ := json.Marshal(paste)
 	//fmt.Println(string(jsonValue))
-	resp, err := http.Post("https://api.pastedb.io/api/paste/new", "application/json", bytes.NewBuffer(jsonValue))
+	resp, err := http.Post("https://api.paste.me/api/paste/new", "application/json", bytes.NewBuffer(jsonValue))
 	//resp.Body.Read(res)
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(bodyBytes)
@@ -169,11 +169,11 @@ func Action(c *cli.Context) error {
 		}
 
 		msg := `Paste added successfully!
-Share this url to your friends: https://pastedb.io/paste/` + res.Uuid + `#` + passPhrase
+Share this url to your friends: https://paste.me/paste/` + res.Uuid + `#` + passPhrase
 		fmt.Println(msg)
 		return nil
 	} else {
-		return cli.NewExitError("There was some error while pasting your data. Please try again later or contact the PasteDB admin!", 17)
+		return cli.NewExitError("There was some error while pasting your data. Please try again later or contact the Paste.me admin!", 17)
 	}
 
 	return nil
