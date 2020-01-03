@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -152,23 +152,23 @@ func SetupApp(args []string) error {
 	app.Usage = "Share your pastes securely"
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "name",
 			Usage: "Insert the name of the paste here.",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "body",
 			Usage: "Here you can insert the paste body or send it through cli.",
 		},
-		cli.Int64Flag{
+		&cli.Int64Flag{
 			Name:  "expire",
 			Usage: "Here you will be able to set an expiration time for your pastes. The expiration time should be defined in minutes. Allowed values for the time being: 5,10,60,1440,10080,43800.",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "destroy",
 			Usage: "With this flag, you are posting the paste with a 'Self Destruct' flag. The link will work only once.",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "source",
 			Usage: "With this flag, you are posting a paste which is some kind of source code. Syntax highlighting will be applied.",
 		},
