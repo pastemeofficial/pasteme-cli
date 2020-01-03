@@ -12,11 +12,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -33,40 +34,56 @@ type Paste struct {
 			Salt string `json:"salt"`
 		} `json:"body"`
 	} `json:"paste"`
-	SourceCode     bool  `json:"sourceCode"`
-	SelfDestruct   bool  `json:"selfDestruct"`
-	ExpiresMinutes int64 `json:"expiresMinutes"`
+	Files          []Files `bson:"files" json:"files"`
+	SourceCode     bool    `json:"sourceCode"`
+	SelfDestruct   bool    `json:"selfDestruct"`
+	ExpiresMinutes int64   `json:"expiresMinutes"`
+}
+
+type Files struct {
+	Name struct {
+		Data   string `bson:"data" json:"data"`
+		Vector string `bson:"iv" json:"iv"`
+		Salt   string `bson:"salt" json:"salt"`
+	} `json:"name"`
+	Content struct {
+		Data   string `bson:"data" json:"data"`
+		Vector string `bson:"iv" json:"iv"`
+		Salt   string `bson:"salt" json:"salt"`
+	} `json:"content"`
 }
 
 type PasteSuccess struct {
-	Msg  string `json:"msg"`
-	Uuid string `json:"uuid"`
+	Msg   string `json:"msg"`
+	Paste struct {
+		Uuid string `json:"uuid"`
+	} `json:"paste"`
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "Paste.me"
-	app.Version = "v0.0.1"
+	app.Version = "v0.0.2"
 	app.Usage = "Share your pastes securely"
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "name",
 			Usage: "Insert the name of the paste here.",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "body",
 			Usage: "Here you can insert the paste body or send it through cli.",
 		},
-		cli.Int64Flag{
+		&cli.Int64Flag{
 			Name:  "expire",
 			Usage: "Here you will be able to set an expiration time for your pastes. The expiration time should be defined in minutes. Allowed values for the time being: 5,10,60,1440,10080,43800.",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "destroy",
 			Usage: "With this flag, you are posting the paste with a 'Self Destruct' flag. The link will work only once.",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "source",
 			Usage: "With this flag, you are posting a paste which is some kind of source code. Syntax highlighting will be applied.",
 		},
@@ -74,7 +91,10 @@ func main() {
 
 	app.Action = Action
 
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func Action(c *cli.Context) error {
@@ -91,11 +111,9 @@ func Action(c *cli.Context) error {
 		return errors.New("paste_name_error")
 	}
 
-	//var r io.Reader
 	var terminalText string
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		//r = strings.NewReader(string(os.Stdin))
 		terminalText, err = ReadDataFromTerminal(os.Stdin)
 		if err != nil {
 			return err
@@ -107,7 +125,6 @@ func Action(c *cli.Context) error {
 			terminalText = ""
 		}
 	}
-
 
 	if len(terminalText) > 0 {
 		pasteText = terminalText
@@ -145,16 +162,26 @@ func Action(c *cli.Context) error {
 	paste.Paste.Body.Salt = splittedEncryptData[0]
 	paste.SourceCode = sourceCode
 	paste.SelfDestruct = destroy
+	// Note: The cli client does not support sending files yet!
+	paste.Files = []Files{}
+
 	if !destroy {
 		paste.ExpiresMinutes = minutes
 	}
 
 	jsonValue, _ := json.Marshal(paste)
-	//fmt.Println(string(jsonValue))
-	resp, err := http.Post("https://api.paste.me/api/paste/new", "application/json", bytes.NewBuffer(jsonValue))
-	//resp.Body.Read(res)
+
+	req, err := http.NewRequest("POST", "https://api.paste.me/api/paste/new", bytes.NewBuffer(jsonValue))
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	bodyString := string(bodyBytes)
+	resp.Body.Close()
 
 	if err != nil {
 		return cli.NewExitError("There was some problem while sending the paste data. Please try again later or contact the site administrator.", 15)
@@ -162,14 +189,14 @@ func Action(c *cli.Context) error {
 
 	if resp.StatusCode == 200 {
 		res := PasteSuccess{}
-		err = json.Unmarshal([]byte(bodyString), &res)
+		err = json.Unmarshal(bodyBytes, &res)
 
 		if err != nil {
 			return cli.NewExitError("We received an invalid response from the server. Please contact the site administrator.", 16)
 		}
 
 		msg := `Paste added successfully!
-Share this url to your friends: https://paste.me/paste/` + res.Uuid + `#` + passPhrase
+Share this url to your friends: https://paste.me/paste/` + res.Paste.Uuid + `#` + passPhrase
 		fmt.Println(msg)
 		return nil
 	} else {
