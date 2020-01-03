@@ -184,7 +184,4 @@ func SetupApp(args []string) error {
 func TestBase(t *testing.T) {
 	os.Args = []string{"cmd", "--name", "Asddd", "--body", "This is a random paste body", "--source", "--destroy"}
 	main()
-
-	os.Args = []string{"cmd", "--name", "Asddd", "--source", "--destroy"}
-	main()
 }
