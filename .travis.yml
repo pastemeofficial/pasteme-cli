@@ -1,8 +1,9 @@
 language: go
 
+go_import_path: github.com/0x111/pasteme-cli
+
 go:
-  - 1.13.0
-  - tip
+  - "1.13.0"
 
 before_install:
   - go get -v ./...
