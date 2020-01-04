@@ -1,11 +1,11 @@
 language: go
 
 go:
-  - 1.9.2
+  - 1.13.0
   - tip
 
 before_install:
-  - go get -t -v ./...
+  - go get -v ./...
 
 script:
   - go test -race -coverprofile=coverage.txt -covermode=atomic
