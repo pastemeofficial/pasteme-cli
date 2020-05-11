@@ -1,4 +1,4 @@
-# pastedb-cli
+# pasteme-cli
 
 This cli app serves as a purpose to uploading pastes to the pastedb.io service from the command line.
 
