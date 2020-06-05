@@ -114,12 +114,12 @@ func TestAction(t *testing.T) {
 	//third run without minutes flag
 	err = SetupApp([]string{"cmd", "--name", "Asddd", "--body", "This is a random paste body"})
 	//
-	if !a.Equal("expire_not_found", err.Error()) {
-		t.Fatalf("The expected result did not match the required result. (%s, %s)", err.Error(), "expire_not_found")
+	if !a.Equal("expires_not_found", err.Error()) {
+		t.Fatalf("The expected result did not match the required result. (%s, %s)", err.Error(), "expires_not_found")
 	}
 
 	//with minutes flag
-	err = SetupApp([]string{"cmd", "--name", "Asddd", "--body", "This is a random paste body", "--expire", "5"})
+	err = SetupApp([]string{"cmd", "--name", "Asddd", "--body", "This is a random paste body", "--expires", "5"})
 	//
 	if !a.Equal(nil, err) {
 		t.Fatalf("The expected result did not match the required result. (%s, %s)", err.Error(), "minutes_not_found")
@@ -147,8 +147,8 @@ func SetupApp(args []string) error {
 	var err error
 	app := cli.NewApp()
 	app.Writer = ioutil.Discard
-	app.Name = "PasteDB"
-	app.Version = "0.0.1"
+	app.Name = "Paste.me"
+	app.Version = "v0.0.3"
 	app.Usage = "Share your pastes securely"
 
 	app.Flags = []cli.Flag{
@@ -161,7 +161,7 @@ func SetupApp(args []string) error {
 			Usage: "Here you can insert the paste body or send it through cli.",
 		},
 		&cli.Int64Flag{
-			Name:  "expire",
+			Name:  "expires",
 			Usage: "Here you will be able to set an expiration time for your pastes. The expiration time should be defined in minutes. Allowed values for the time being: 5,10,60,1440,10080,43800.",
 		},
 		&cli.BoolFlag{

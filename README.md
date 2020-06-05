@@ -1,6 +1,6 @@
 # pasteme-cli
 
-This cli app serves as a purpose to uploading pastes to the pastedb.io service from the command line.
+This cli app serves as a purpose to uploading pastes to the paste.me service from the command line.
 
 This makes it easy to paste some config file or other data and share the result with someone.
 
