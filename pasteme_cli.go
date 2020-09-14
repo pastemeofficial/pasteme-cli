@@ -198,7 +198,6 @@ func Action(c *cli.Context) error {
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	fmt.Println("BODY", string(bodyBytes))
 
 	if err != nil {
 		return cli.NewExitError("There was some problem while sending the paste data. Please try again later or contact the site administrator.", 15)

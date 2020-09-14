@@ -69,7 +69,7 @@ func TestEncrypt(t *testing.T) {
 	//test with predefined passphrase and salt
 	mockPassphrase := "passphrase"
 	plainText := "Some random text to encrypt"
-	result := encrypt(mockPassphrase, plainText)
+	result := encrypt(mockPassphrase, []byte(plainText))
 	resultArr := strings.Split(result, "-")
 
 	if !a.Equal(len(resultArr), 3) {
