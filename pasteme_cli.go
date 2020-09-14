@@ -83,9 +83,8 @@ func main() {
 			Required: true,
 		},
 		&cli.Int64Flag{
-			Name:     "expires",
-			Usage:    "Here you will be able to set an expiration time for your pastes. The expiration time should be defined in minutes. Allowed values for the time being: 5,10,60,1440,10080,43800.",
-			Required: true,
+			Name:  "expires",
+			Usage: "Here you will be able to set an expiration time for your pastes. The expiration time should be defined in minutes. Allowed values for the time being: 5,10,60,1440,10080,43800.",
 		},
 		&cli.BoolFlag{
 			Name:  "destroy",
