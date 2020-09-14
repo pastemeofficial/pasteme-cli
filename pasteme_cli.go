@@ -146,6 +146,13 @@ func Action(c *cli.Context) error {
 		return errors.New("paste_length_error")
 	}
 
+	// if destroy is set, pass a valid expires to the paste
+	// the paste will still self-destruct, this is so we are
+	// on par with the WEB UI
+	if destroy {
+		expires = 60 // expires is not considered for self-destruct pastes
+	}
+
 	if !destroy && !IsValidMinutes(expires) {
 		fmt.Println("You did not provide a valid expires flag. See --help for more insight on this one.")
 		return errors.New("expires_not_found")
