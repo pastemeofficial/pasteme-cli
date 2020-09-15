@@ -27,7 +27,14 @@ jobs:
         run: go build -v -o build/pasteme-cli-linux-amd64
 
       - name: Test
-        run: go test -v .
+        run: go test -v -cover -coverprofile=profile-linux-amd64.out ./...
+
+      - name: Codecov linux/amd64
+        uses: codecov/codecov-action@v1.0.13
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./profile-linux-amd64.out
+          name: coverage linux/amd64
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
@@ -54,7 +61,14 @@ jobs:
         run: go build -v -o build/pasteme-cli-windows-amd64.exe
 
       - name: Test
-        run: go test -v .
+        run: go test -v -cover -coverprofile=profile-windows-amd64.out ./...
+
+      - name: Codecov windows/amd64
+        uses: codecov/codecov-action@v1.0.13
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./profile-windows-amd64.out
+          name: coverage windows/amd64
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
@@ -81,7 +95,14 @@ jobs:
         run: go build -v -o build/pasteme-cli-darwin-amd64
 
       - name: Test
-        run: go test -v .
+        run: go test -v -cover -coverprofile=profile-darwin-amd64.out ./...
+
+      - name: Codecov darwin/amd64
+        uses: codecov/codecov-action@v1.0.13
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./profile-darwin-amd64.out
+          name: coverage darwin/amd64
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
