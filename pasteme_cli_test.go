@@ -182,6 +182,11 @@ func SetupApp(args []string) error {
 }
 
 func TestBase(t *testing.T) {
+	os.Args = []string{"cmd", "--name", "Asddd", "--body", "This is a random paste body", "--source", "--destroy"}
+	main()
+}
+
+func TestWithFile(t *testing.T) {
 	os.Args = []string{"cmd", "--name", "Asddd", "--body", "This is a random paste body", "--source", "--destroy", "--file", "./samplefiles/test1.txt", "--file", "./samplefiles/test2.txt"}
 	main()
 }
