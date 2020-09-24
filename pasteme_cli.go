@@ -64,7 +64,7 @@ type PasteSuccess struct {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Paste.me"
-	app.Version = "v0.0.3"
+	app.Version = "v0.1"
 	app.Usage = "Share your pastes securely"
 
 	app.Flags = []cli.Flag{
