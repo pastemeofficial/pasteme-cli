@@ -1,6 +1,6 @@
-module github.com/0x111/pastedb-cli
+module github.com/0x111/pasteme-cli
 
-go 1.12
+go 1.14
 
 require (
 	github.com/davecgh/go-spew v1.1.0 // indirect
